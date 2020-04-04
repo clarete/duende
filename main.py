@@ -95,7 +95,7 @@ def scrape_doc(path, page):
     title = page.select_one('h1').text
     date = page.select_one('.extra').text.strip().split('\r')[0]
     download_link = page.select_one('div.botao.baixar a').get('href')
-    download_name = download(download_link, into_cache=False)
+    download_name, _ = download(download_link, into_cache=False)
     content = (
         page.select_one('div#conteudo div.obraTexto') or
         page.select_one('div#conteudo div.conteudo'))
@@ -105,7 +105,7 @@ def scrape_doc(path, page):
         title=title,
         date=date,
         content=content,
-        download_link=download_name)
+        download_link=link_path(download_name, ''))
 
 
 def do_page(path):
@@ -117,8 +117,8 @@ def do_page(path):
         scrape_page(path, page)
 
 
-def link_path(path, ext='html'):
-    return f"{path.split('/')[-1]}.{ext}"
+def link_path(path, ext='.html'):
+    return f"{path.split('/')[-1]}{ext}"
 
 
 def page_attrs(page_url, page_title):
