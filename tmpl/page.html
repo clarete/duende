@@ -2,13 +2,16 @@
 <html lang="en-us">
   <head>
     <meta charset="utf-8">
-    <title>{title}</title>
+    <title>{{ title }}</title>
     <meta name="description" content="">
     <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
   <body>
     <h1>{{ title }}</h1>
     <div>{{ date }}</div>
+    {% if download_link -%}
+      <div><a href="{{ download_link }}">Download</a></div>
+    {%-  endif %}
 
     {{ content | safe }}
   </body>
