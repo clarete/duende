@@ -66,7 +66,8 @@ TMPL_PATH = os.path.join(os.path.dirname(__file__), 'tmpl')
 TMPL_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(TMPL_PATH),
     autoescape=jinja2.select_autoescape(['html', 'xml']))
-
+TMPL_ENV.trim_blocks = True
+TMPL_ENV.lstrip_blocks = True
 
 def do_template(tmpl, name=None, **kwargs):
     output = os.path.join(TMPL_OUT, name or tmpl)
