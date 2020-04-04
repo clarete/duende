@@ -50,7 +50,7 @@ def cachedurl(url):
 # ---- Templatery ----
 
 
-TMPL_OUT = os.path.join(os.path.dirname(__file__), 'site')
+TMPL_OUT = os.path.join(os.path.dirname(__file__), 'docs')
 TMPL_PATH = os.path.join(os.path.dirname(__file__), 'tmpl')
 TMPL_ENV = jinja2.Environment(
     loader=jinja2.FileSystemLoader(TMPL_PATH),
