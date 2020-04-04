@@ -12,7 +12,7 @@ ROOT_URL = 'http://www.overmundo.com.br'
 INITIAL_PATH = '/arquivo_usuario/daniel-duende'
 
 
-# ---- Teeny lil silly cache system ----
+# ---- Teeny lil silly retrieve & cache system ----
 
 
 def random_sleep():
@@ -30,21 +30,32 @@ def get_page(url):
     raise Exception
 
 
-def savefile(name, content):
+def save_file(name, content):
     io.open(name, 'wb').write(content)
     return content
 
 
-def gen_file_name(url):
-    return './cache/cache-' + url.replace('/', '-').replace(':', '-')
+def gen_file_name(url, cache):
+    name = url.replace('/', '-').replace(':', '-')
+    return f'./cache/cache-{name}' if cache else f'./docs/{name}'
 
 
-def cachedurl(url):
-    name = gen_file_name(url)
+def cached_url(url, into_cache):
+    name = gen_file_name(url, into_cache)
     if os.path.exists(name):
-        return True, io.open(name, 'rb').read()
+        return name, io.open(name, 'rb').read()
     else:
-        return False, savefile(name, get_page(url))
+        return name, save_file(name, get_page(url))
+
+
+def download(path, into_cache):
+    url = f"{ROOT_URL}{path}"
+    return cached_url(url, into_cache)
+
+
+def download_content(path):
+    _, content = download(path, into_cache=True)
+    return content
 
 
 # ---- Templatery ----
@@ -63,13 +74,7 @@ def do_template(tmpl, name=None, **kwargs):
     io.open(output, 'w').write(template.render(**kwargs))
 
 
-# ---- Download & Process Content ---
-
-
-def download_path(path):
-    url = f"{ROOT_URL}{path}"
-    _, content = cachedurl(url)
-    return content
+# ---- Process Content ---
 
 
 def scrape_page(path, page):
@@ -79,24 +84,31 @@ def scrape_page(path, page):
     del content['class']
     do_template(
         'page.html',
-        page_path(path),
+        link_path(path),
         title=title,
         date=date,
         content=content)
 
 
 def scrape_doc(path, page):
-    title = page.select_one('h1')
+    title = page.select_one('h1').text
     date = page.select_one('.extra').text.strip().split('\r')[0]
-    download_link = page.select_one('div.botao.baixar a')
-    download_path(download_link.get('href'))
+    download_link = page.select_one('div.botao.baixar a').get('href')
+    download_name = download(download_link, into_cache=False)
     content = (
         page.select_one('div#conteudo div.obraTexto') or
         page.select_one('div#conteudo div.conteudo'))
+    do_template(
+        'page.html',
+        link_path(path),
+        title=title,
+        date=date,
+        content=content,
+        download_link=download_name)
 
 
 def do_page(path):
-    content = download_path(path)
+    content = download_content(path)
     page = BeautifulSoup(content, 'html.parser')
     if path.startswith('/banco'):
         scrape_doc(path, page)
@@ -104,16 +116,16 @@ def do_page(path):
         scrape_page(path, page)
 
 
-def page_path(path):
-    return f"{path.split('/')[-1]}.html"
+def link_path(path, ext='html'):
+    return f"{path.split('/')[-1]}.{ext}"
 
 
 def page_attrs(page_url, page_title):
-    return {"url": page_path(page_url), "title": page_title}
+    return {"url": link_path(page_url), "title": page_title}
 
 
 def do_root():
-    root_page = BeautifulSoup(download_path(INITIAL_PATH), 'html.parser')
+    root_page = BeautifulSoup(download_content(INITIAL_PATH), 'html.parser')
     pages = []
     for link in root_page.select('div[class=colaboracoes] h3 a'):
         page_url = link.get('href')
